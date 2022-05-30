@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :title="title"
-    :visible="visible"
+    v-model="visible"
     @close="close"
     width="400px"
   >
@@ -13,6 +13,7 @@
         <el-select
           v-model="name"
           @change="holidayChange"
+          placeholder="请选择"
         >
           <el-option
             v-for="item in holidayNames"
@@ -23,7 +24,7 @@
         </el-select>
       </el-form-item>
       <el-form-item label="节假日类型">
-        <el-select v-model="type">
+        <el-select v-model="type" placeholder="请选择">
           <el-option
             v-for="item in holidayTypes"
             :label="item"
@@ -33,21 +34,28 @@
         </el-select>
       </el-form-item>
     </el-form>
-    <div slot="footer">
-      <el-button @click="close">取消</el-button>
-      <el-button
-        @click="sure"
-        type="primary"
-      >确定</el-button>
-    </div>
+    <template #footer>
+      <div>
+        <el-button @click="close">取消</el-button>
+        <el-button
+          @click="sure"
+          type="primary"
+        >确定</el-button>
+      </div>
+    </template>
   </el-dialog>
 </template>
 <script setup>
-import { ref, reactive } from 'vue'
-const title = ref('设置节假日')
+import { ref, reactive, defineExpose, getCurrentInstance } from 'vue'
+let title = ref('设置节假日')
 const holidayTypes = reactive(['假日', '周末'])
 const name = ref('')
 const type = ref('')
+const visible = ref(false)
+const instance = getCurrentInstance()
+let calendarApi = null
+let selectInfo = null
+let id = null
 const holidayNames = reactive([
   '春节',
   '清明节',
@@ -59,50 +67,50 @@ const holidayNames = reactive([
   '周末'
 ])
 function close () {
-  this.id = ''
-  this.visible = false
+  id = ''
+  visible.value = false
 }
-function holidayChange(val) {
-  this.name = val
-  this.type = val !== '周末' ? '节假日' : '周末'
+function holidayChange (val) {
+  name.value = val
+  type.value = val !== '周末' ? '节假日' : '周末'
 }
-function show (calendarApi, selectInfo) {
-  this.visible = true
-  this.calendarApi = calendarApi
-  this.selectInfo = selectInfo
+function show (calendarApiData, selectData) {
+  visible.value = true
+  calendarApi = calendarApiData
+  selectInfo = selectData
 }
 function edit (clickInfo) {
   const event = clickInfo.event
-  const calendarApi = clickInfo.view.calendar
-  if (!this.calendarApi) {
-    this.calendarApi = calendarApi
+  const calendarApiData = clickInfo.view.calendar
+  if (!calendarApi) {
+    calendarApi = calendarApiData
   }
-  this.visible = true
-  this.name = event.title
-  this.id = event.id
+  visible.value = true
+  name.value = event.title
+  id = event.id
   if (event.title === '周末') {
-    this.type = '周末'
+    type.value = '周末'
   } else {
-    this.type = '假日'
+    type.value = '假日'
   }
 }
 function sure () {
-  if (!this.id) {
-    this.calendarApi.addEvent({
-      id: this.getGuid(),
-      title: this.name,
-      start: this.selectInfo.startStr,
-      end: this.selectInfo.endStr,
-      allDay: this.selectInfo.allDay,
+  if (!id) {
+    calendarApi.addEvent({
+      id: getGuid(),
+      title: name.value,
+      start: selectInfo.startStr,
+      end: selectInfo.endStr,
+      allDay: selectInfo.allDay,
       className: 'holiday',
       color: 'red',
       editable: true
     })
   } else {
-    const event = this.calendarApi.getEventById(this.id)
-    event.setProp('title', this.name)
+    const event = calendarApi.getEventById(instance.id)
+    event.setProp('title', name.value)
   }
-  this.close()
+  close()
 }
 function getGuid () {
   const S4 = () =>
@@ -122,4 +130,8 @@ function getGuid () {
     S4()
   )
 }
+defineExpose({
+  show,
+  edit
+})
 </script>
