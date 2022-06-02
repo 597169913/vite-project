@@ -8,7 +8,7 @@ export default function () {
   const name = ref('')
   const type = ref('')
   const visible = ref(false)
-  const instance = getCurrentInstance()
+  // const instance = getCurrentInstance()
   let calendarApi = null
   let selectInfo = null
   let id = null
@@ -26,6 +26,10 @@ export default function () {
   function close() {
     id = ''
     visible.value = false
+    calendarApi = null
+    selectInfo = null
+    name.value = ''
+    type.value = ''
   }
 
   function holidayChange(val) {
@@ -68,7 +72,7 @@ export default function () {
         editable: true
       })
     } else {
-      const event = calendarApi.getEventById(instance.id)
+      const event = calendarApi.getEventById(id)
       event.setProp('title', name.value)
     }
     close()
